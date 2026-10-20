@@ -1,0 +1,193 @@
+{
+  "image": "weapons.png",
+  "weapons": {
+    "pistol": {
+      "slot": 1,
+      "fire_mode": "semi",
+      "rpm": 300,
+      "damage": 20,
+      "pellets": 1,
+      "spread_deg": 0.6,
+      "range": 40.0,
+      "mag_size": 12,
+      "start_reserve": 60,
+      "reload_time": 1.1,
+      "switch_time": 0.35,
+      "recoil": {
+        "viewmodel": 0.8,
+        "pitch_deg": 0.8,
+        "fov": 1.0
+      },
+      "muzzle_light": {
+        "color": [
+          1.0,
+          0.8,
+          0.5
+        ],
+        "intensity": 2.0,
+        "radius": 5.0,
+        "duration": 0.06
+      },
+      "frames": {
+        "idle": {
+          "rect": [
+            0,
+            0,
+            96,
+            96
+          ]
+        },
+        "fire": [
+          {
+            "rect": [
+              96,
+              0,
+              96,
+              96
+            ]
+          },
+          {
+            "rect": [
+              192,
+              0,
+              96,
+              96
+            ]
+          }
+        ],
+        "reload": [
+          {
+            "rect": [
+              288,
+              0,
+              96,
+              96
+            ]
+          },
+          {
+            "rect": [
+              384,
+              0,
+              96,
+              96
+            ]
+          }
+        ],
+        "switch": [
+          {
+            "rect": [
+              480,
+              0,
+              96,
+              96
+            ]
+          }
+        ],
+        "pump": [
+          {
+            "rect": [
+              576,
+              0,
+              96,
+              96
+            ]
+          }
+        ]
+      }
+    },
+    "shotgun": {
+      "slot": 2,
+      "fire_mode": "pump",
+      "rpm": 70,
+      "damage": 10,
+      "pellets": 8,
+      "spread_deg": 5.0,
+      "range": 25.0,
+      "mag_size": 6,
+      "start_reserve": 30,
+      "reload_time": 1.9,
+      "switch_time": 0.5,
+      "recoil": {
+        "viewmodel": 1.5,
+        "pitch_deg": 2.0,
+        "fov": 2.0
+      },
+      "muzzle_light": {
+        "color": [
+          1.0,
+          0.72,
+          0.39
+        ],
+        "intensity": 3.4,
+        "radius": 6.5,
+        "duration": 0.08
+      },
+      "frames": {
+        "idle": {
+          "rect": [
+            0,
+            96,
+            96,
+            96
+          ]
+        },
+        "fire": [
+          {
+            "rect": [
+              96,
+              96,
+              96,
+              96
+            ]
+          },
+          {
+            "rect": [
+              192,
+              96,
+              96,
+              96
+            ]
+          }
+        ],
+        "reload": [
+          {
+            "rect": [
+              288,
+              96,
+              96,
+              96
+            ]
+          },
+          {
+            "rect": [
+              384,
+              96,
+              96,
+              96
+            ]
+          }
+        ],
+        "switch": [
+          {
+            "rect": [
+              480,
+              96,
+              96,
+              96
+            ]
+          }
+        ],
+        "pump": [
+          {
+            "rect": [
+              576,
+              96,
+              96,
+              96
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

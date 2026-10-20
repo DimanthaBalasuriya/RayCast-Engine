@@ -34,6 +34,10 @@ class Light:
     orbit_speed: float = 0.0
     created: float = 0.0
     lifetime: float = 0.0
+    role: str = "level"
+    shootable: bool = False
+    shot_out: bool = False
+    identifier: str = ""
     base_x: float = field(init=False)
     base_y: float = field(init=False)
 
@@ -65,7 +69,7 @@ class Lighting:
     def __init__(self, level: Level, quality: str = config.LIGHTING_QUALITY):
         self.level = level
         self.lights: list[Light] = []
-        for item in level.meta["lights"]:
+        for index, item in enumerate(level.meta["lights"]):
             px, py = item["pos"]
             self.lights.append(Light(
                 float(px), float(py), tuple(item["color"]), float(item["intensity"]),
@@ -74,6 +78,7 @@ class Lighting:
                 center=tuple(item.get("center", (px, py))),
                 orbit_radius=float(item.get("orbit_radius", 0)),
                 orbit_speed=float(item.get("orbit_speed", 0)),
+                shootable=bool(item.get("shootable", False)), identifier=str(item.get("id", index)),
             ))
         self.flashlight = Light(0, 0, (0.9, 0.96, 1.0), 2.0, 9.0, 0.55,
                                 "spot", "none", inner=0.30, outer=0.56)
@@ -93,21 +98,47 @@ class Lighting:
         self.static_map = np.zeros(shape, dtype=np.float32)
         self.dynamic_map = np.zeros(shape, dtype=np.float32)
         for light in self.lights:
-            if light.flicker == "none" and light.motion == "none":
+            if not light.shot_out and light.flicker == "none" and light.motion == "none":
                 self._add_light(self.static_map, light, 0, 1, 1)
         self.combined_map = self.static_map.copy()
         self.frame = 0
 
     def spawn(self, player: Player, now: float) -> None:
         """Create a five-second fading debug light at the player."""
-        self.temporary.append(Light(player.x, player.y, (1.0, 0.78, 0.42),
-                                    1.6, 5.0, created=now, lifetime=5.0))
+        self.spawn_temp_light(player.x, player.y, (1.0, 0.78, 0.42), 1.6, 5.0, 5.0, now,
+                              "debug", player.z + config.STAND_EYE_HEIGHT)
+
+    def spawn_temp_light(self, x: float, y: float, color: tuple[float, float, float],
+                         intensity: float, radius: float, duration: float, now: float,
+                         role: str = "impact", z: float = 0.65) -> bool:
+        """Add a budgeted light; impact lights are evicted before muzzle flashes."""
+        if len(self.temporary) >= config.MAX_TEMP_LIGHTS:
+            victim = next((light for light in self.temporary if light.role == "impact"), None)
+            if victim is None and role == "muzzle":
+                victim = next((light for light in self.temporary if light.role != "muzzle"), None)
+            if victim is None:
+                return False
+            self.temporary.remove(victim)
+        self.temporary.append(Light(x, y, color, intensity, radius, z=z,
+                                    created=now, lifetime=duration, role=role))
+        self.frame = self.interval - 1  # ensure brief flashes appear next update
+        return True
+
+    def shoot_out(self, light: Light) -> None:
+        """Permanently disable a demo light and rebake if it was static."""
+        if light.shot_out:
+            return
+        light.shot_out = True
+        if light.flicker == "none" and light.motion == "none":
+            self.set_quality(self.quality)
+            self.frame = self.interval - 1
 
     def update(self, now: float, player: Player, dt: float) -> None:
         """Refresh only moving/flickering lights, with quality-dependent cadence."""
         self.temporary = [light for light in self.temporary if now - light.created < light.lifetime]
         if self.flashlight_on:
             self.flashlight.x, self.flashlight.y = player.x, player.y
+            self.flashlight.z = player.z + config.STAND_EYE_HEIGHT + (config.CROUCH_EYE_HEIGHT - config.STAND_EYE_HEIGHT) * player.crouch_t
             target = player.angle
             diff = math.atan2(math.sin(target - self.flashlight.angle), math.cos(target - self.flashlight.angle))
             lag = config.FLASHLIGHT_LAG
@@ -118,7 +149,7 @@ class Lighting:
         start = time.perf_counter()
         self.dynamic_map.fill(0)
         for light in self.lights:
-            if light.flicker == "none" and light.motion == "none":
+            if light.shot_out or (light.flicker == "none" and light.motion == "none"):
                 continue
             if light.motion == "orbit":
                 light.x = light.center[0] + math.cos(now * light.orbit_speed) * light.orbit_radius

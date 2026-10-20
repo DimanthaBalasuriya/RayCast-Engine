@@ -1,0 +1,86 @@
+{
+  "format": "transparent_pose_sheets_v1",
+  "description": "Generated character pose sheets based on the supplied player and enemy reference. Poses are ordered left to right, then top to bottom. These are visual source assets; inspect and clean cell boundaries before using them as animation frames.",
+  "players": {
+    "assault": {
+      "file": "players/assault.png",
+      "name": "Ex-military agent",
+      "layout": [4, 2],
+      "poses": ["idle", "walk", "run", "shoot", "melee", "jump", "hurt", "die"]
+    },
+    "sniper": {
+      "file": "players/sniper.png",
+      "name": "Tech specialist",
+      "layout": [4, 2],
+      "poses": ["idle", "walk", "run", "shoot", "melee", "jump", "hurt", "die"]
+    },
+    "heavy": {
+      "file": "players/heavy.png",
+      "name": "Heavy operative",
+      "layout": [4, 2],
+      "poses": ["idle", "walk", "run", "shoot", "melee", "jump", "hurt", "die"]
+    }
+  },
+  "enemies": {
+    "alpha_drone": {
+      "file": "enemies/alpha_drone.png",
+      "role": "basic",
+      "layout": [5, 1],
+      "poses": ["idle", "walk", "attack", "hurt", "die"]
+    },
+    "spitter": {
+      "file": "enemies/spitter.png",
+      "role": "ranged",
+      "layout": [6, 1],
+      "poses": ["idle", "walk", "attack", "shoot", "hurt", "die"]
+    },
+    "charger": {
+      "file": "enemies/charger.png",
+      "role": "melee",
+      "layout": [6, 1],
+      "poses": ["idle", "walk", "run", "attack", "hurt", "die"]
+    },
+    "flyer": {
+      "file": "enemies/flyer.png",
+      "role": "air",
+      "layout": [5, 1],
+      "poses": ["idle", "fly", "attack", "hurt", "die"]
+    },
+    "shield_guard": {
+      "file": "enemies/shield_guard.png",
+      "role": "armored",
+      "layout": [5, 1],
+      "poses": ["idle", "walk", "attack", "hurt", "die"]
+    },
+    "sniper": {
+      "file": "enemies/sniper.png",
+      "role": "ranged",
+      "layout": [5, 1],
+      "poses": ["idle", "walk", "shoot", "hurt", "die"]
+    },
+    "tentacle_beast": {
+      "file": "enemies/tentacle_beast.png",
+      "role": "mid boss",
+      "layout": [4, 1],
+      "poses": ["idle", "attack", "hurt", "die"]
+    },
+    "burrower": {
+      "file": "enemies/burrower.png",
+      "role": "ambush",
+      "layout": [5, 1],
+      "poses": ["idle", "burrow", "attack", "hurt", "die"]
+    },
+    "mutant_brute": {
+      "file": "enemies/mutant_brute.png",
+      "role": "tank",
+      "layout": [5, 1],
+      "poses": ["idle", "walk", "attack", "hurt", "die"]
+    },
+    "alien_queen": {
+      "file": "enemies/alien_queen.png",
+      "role": "boss",
+      "layout": [4, 1],
+      "poses": ["idle", "attack", "hurt", "die"]
+    }
+  }
+}

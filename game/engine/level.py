@@ -3,9 +3,22 @@
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
+import math
 from pathlib import Path
 
 import numpy as np
+
+
+@dataclass(frozen=True)
+class Hit:
+    tile: tuple[int, int]
+    face: str
+    distance: float
+    point: tuple[float, float]
+    u: float
+    normal: tuple[int, int]
+    surface: int
 
 
 class Level:
@@ -51,3 +64,45 @@ class Level:
     def wall_at(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
         """Return wall IDs for in-bounds integer tile coordinates."""
         return self.walls[np.clip(y, 0, self.height - 1), np.clip(x, 0, self.width - 1)]
+
+    def ground_height(self, x: float, y: float) -> float:
+        """Current level has one flat floor; retained for later height geometry."""
+        return 0.0
+
+    def can_stand(self, x: float, y: float) -> bool:
+        """All current ceilings have full height."""
+        return True
+
+    def grid_raycast(self, origin: tuple[float, float], direction: tuple[float, float],
+                     max_dist: float) -> Hit | None:
+        """Cast a scalar DDA through the same solid grid used by wall/light rays."""
+        unit = self.tile_world_size
+        ox, oy = origin[0] / unit, origin[1] / unit
+        dx, dy = direction
+        mx, my = math.floor(ox), math.floor(oy)
+        sx, sy = (-1 if dx < 0 else 1), (-1 if dy < 0 else 1)
+        delta_x = abs(1 / dx) if abs(dx) > 1e-9 else math.inf
+        delta_y = abs(1 / dy) if abs(dy) > 1e-9 else math.inf
+        side_x = (ox - mx if dx < 0 else mx + 1 - ox) * delta_x
+        side_y = (oy - my if dy < 0 else my + 1 - oy) * delta_y
+        for _ in range(self.width + self.height + 2):
+            if side_x < side_y:
+                distance = side_x * unit
+                mx += sx
+                side_x += delta_x
+                face, normal = ("W", (-1, 0)) if sx > 0 else ("E", (1, 0))
+            else:
+                distance = side_y * unit
+                my += sy
+                side_y += delta_y
+                face, normal = ("N", (0, -1)) if sy > 0 else ("S", (0, 1))
+            if distance > max_dist:
+                return None
+            if not (0 <= mx < self.width and 0 <= my < self.height):
+                return None
+            if self.solid[my, mx]:
+                hx, hy = origin[0] + dx * distance, origin[1] + dy * distance
+                raw_u = (hy / unit if normal[0] else hx / unit) % 1
+                u = (1 - raw_u) % 1 if (normal[0] < 0 or normal[1] > 0) else raw_u
+                return Hit((mx, my), face, distance, (hx, hy), u, normal, int(self.walls[my, mx]))
+        return None

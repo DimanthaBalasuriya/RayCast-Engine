@@ -6,24 +6,23 @@ import math
 
 import numpy as np
 
-from config import FOV_DEG
 from engine.atlas import Atlas
+from engine.camera import Camera
 from engine.level import Level
-from engine.player import Player
 
 
-def _camera(player: Player, width: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    ca, sa = math.cos(player.angle), math.sin(player.angle)
-    plane = math.tan(math.radians(FOV_DEG) / 2)
+def _camera(camera: Camera, width: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    ca, sa = math.cos(camera.angle), math.sin(camera.angle)
+    plane = math.tan(math.radians(camera.fov) / 2)
     camera_x = 2 * (np.arange(width, dtype=np.float32) + 0.5) / width - 1
     return ca + (-sa * plane) * camera_x, sa + (ca * plane) * camera_x, camera_x
 
 
-def cast_walls(level: Level, atlas: Atlas, player: Player, width: int, height: int, horizon: float) -> tuple[np.ndarray, ...]:
+def cast_walls(level: Level, atlas: Atlas, camera: Camera, width: int, height: int, horizon: float) -> tuple[np.ndarray, ...]:
     """Cast all columns together; only the DDA step count uses a Python loop."""
     unit = level.tile_world_size
-    px, py = player.x / unit, player.y / unit
-    dx, dy, _ = _camera(player, width)
+    px, py = camera.x / unit, camera.y / unit
+    dx, dy, _ = _camera(camera, width)
     mx = np.full(width, math.floor(px), dtype=np.int32)
     my = np.full(width, math.floor(py), dtype=np.int32)
     delta_x = np.abs(1 / np.where(np.abs(dx) < 1e-8, 1e-8, dx))
@@ -56,9 +55,12 @@ def cast_walls(level: Level, atlas: Atlas, player: Player, width: int, height: i
     u = np.where(((side == 0) & (dx > 0)) | ((side == 1) & (dy < 0)), 1 - u, u)
     tex_x = np.minimum((u * atlas.tile_size).astype(np.int32), atlas.tile_size - 1)
     wall_ids = level.wall_at(mx, my)
-    wall_height = height / depth
-    top = horizon - wall_height * 0.5
-    bottom = horizon + wall_height * 0.5
+    # One vertical projection constant keeps walls and planes proportional.
+    projection = camera.projection if camera.projection > 0 else height
+    wall_height = projection / depth
+    # Eye height moves the top and bottom independently; at 0.5 this is phase 1.
+    top = horizon - (1 - camera.eye_z) * wall_height
+    bottom = horizon + camera.eye_z * wall_height
     rows = np.arange(height, dtype=np.float32)[:, None]
     wall_mask = (rows >= top[None, :]) & (rows < bottom[None, :])
     tex_y = (((rows - top[None, :]) / wall_height[None, :]) * atlas.tile_size).astype(np.int32)
@@ -71,19 +73,21 @@ def cast_walls(level: Level, atlas: Atlas, player: Player, width: int, height: i
     sample_x = (hit_x + nx * 0.18) * unit
     sample_y = (hit_y + ny * 0.18) * unit
     face = np.where(side == 0, np.where(nx > 0, 2, 3), np.where(ny > 0, 4, 5)).astype(np.uint8)
-    return color, wall_mask, depth * unit, sample_x, sample_y, face
+    return color, wall_mask, depth * unit, sample_x, sample_y, face, mx, my, u, top, wall_height
 
 
-def cast_planes(level: Level, atlas: Atlas, player: Player, width: int, height: int, horizon: float) -> tuple[np.ndarray, ...]:
+def cast_planes(level: Level, atlas: Atlas, camera: Camera, width: int, height: int, horizon: float) -> tuple[np.ndarray, ...]:
     """Project every plane pixel from its row distance and ray direction."""
-    dx, dy, _ = _camera(player, width)
+    dx, dy, _ = _camera(camera, width)
     rows = np.arange(height, dtype=np.float32) + 0.5
     offset = rows - horizon
     floor = offset > 0
-    # The floor and ceiling are half a tile above/below the camera.
-    distance = (height * 0.5 * level.tile_world_size) / np.maximum(np.abs(offset), 0.5)
-    wx = player.x + distance[:, None] * dx[None, :]
-    wy = player.y + distance[:, None] * dy[None, :]
+    # Each plane's row distance uses its actual vertical distance from the eye.
+    vertical = np.where(floor, camera.eye_z, 1 - camera.eye_z)
+    projection = camera.projection if camera.projection > 0 else height
+    distance = (projection * vertical * level.tile_world_size) / np.maximum(np.abs(offset), 0.5)
+    wx = camera.x + distance[:, None] * dx[None, :]
+    wy = camera.y + distance[:, None] * dy[None, :]
     tile_x = np.clip(np.floor(wx / level.tile_world_size).astype(np.int32), 0, level.width - 1)
     tile_y = np.clip(np.floor(wy / level.tile_world_size).astype(np.int32), 0, level.height - 1)
     ids = np.where(floor[:, None], level.floors[tile_y, tile_x], level.ceilings[tile_y, tile_x])

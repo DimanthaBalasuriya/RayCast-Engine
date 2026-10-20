@@ -1,0 +1,76 @@
+{
+  "format": "transparent_animation_grid_v1",
+  "columns": 4,
+  "rows": 5,
+  "frame_region_rule": "For column c and row r, x0=round(c*width/4), x1=round((c+1)*width/4), y0=round(r*height/5), y1=round((r+1)*height/5). Frames are read left to right.",
+  "notes": "These are AI-generated pose sequences. Some effects cross nominal cell boundaries; inspect and clean them before production animation use. Nonlooping death rows hold the last frame.",
+  "players": {
+    "assault": {"file": "players/assault.png", "animations": [
+      {"name": "idle", "fps": 5, "loop": true}, {"name": "walk", "fps": 9, "loop": true},
+      {"name": "run", "fps": 12, "loop": true}, {"name": "cover", "fps": 6, "loop": true},
+      {"name": "fight", "fps": 9, "loop": true}
+    ]},
+    "sniper": {"file": "players/sniper.png", "animations": [
+      {"name": "idle", "fps": 5, "loop": true}, {"name": "walk", "fps": 8, "loop": true},
+      {"name": "run", "fps": 11, "loop": true}, {"name": "cover", "fps": 6, "loop": true},
+      {"name": "fight", "fps": 7, "loop": false}
+    ]},
+    "heavy": {"file": "players/heavy.png", "animations": [
+      {"name": "idle", "fps": 4, "loop": true}, {"name": "walk", "fps": 7, "loop": true},
+      {"name": "run", "fps": 9, "loop": true}, {"name": "cover", "fps": 5, "loop": true},
+      {"name": "fight", "fps": 10, "loop": true}
+    ]}
+  },
+  "enemies": {
+    "alpha_drone": {"file": "enemies/alpha_drone.png", "animations": [
+      {"name": "idle", "fps": 6, "loop": true}, {"name": "walk", "fps": 10, "loop": true},
+      {"name": "pounce", "fps": 12, "loop": false}, {"name": "laser", "fps": 8, "loop": false},
+      {"name": "die", "fps": 6, "loop": false}
+    ]},
+    "spitter": {"file": "enemies/spitter.png", "animations": [
+      {"name": "idle", "fps": 5, "loop": true}, {"name": "walk", "fps": 8, "loop": true},
+      {"name": "claw", "fps": 10, "loop": false}, {"name": "spit", "fps": 8, "loop": false},
+      {"name": "die", "fps": 6, "loop": false}
+    ]},
+    "charger": {"file": "enemies/charger.png", "animations": [
+      {"name": "idle", "fps": 5, "loop": true}, {"name": "walk", "fps": 7, "loop": true},
+      {"name": "charge", "fps": 13, "loop": true}, {"name": "attack", "fps": 10, "loop": false},
+      {"name": "die", "fps": 6, "loop": false}
+    ]},
+    "flyer": {"file": "enemies/flyer.png", "animations": [
+      {"name": "idle", "fps": 8, "loop": true}, {"name": "fly", "fps": 12, "loop": true},
+      {"name": "dodge", "fps": 12, "loop": false}, {"name": "attack", "fps": 9, "loop": false},
+      {"name": "die", "fps": 7, "loop": false}
+    ]},
+    "shield_guard": {"file": "enemies/shield_guard.png", "animations": [
+      {"name": "idle", "fps": 5, "loop": true}, {"name": "walk", "fps": 7, "loop": true},
+      {"name": "cover", "fps": 6, "loop": true}, {"name": "bash", "fps": 10, "loop": false},
+      {"name": "die", "fps": 6, "loop": false}
+    ]},
+    "sniper": {"file": "enemies/sniper.png", "animations": [
+      {"name": "idle", "fps": 5, "loop": true}, {"name": "walk", "fps": 7, "loop": true},
+      {"name": "cover", "fps": 6, "loop": true}, {"name": "shoot", "fps": 8, "loop": false},
+      {"name": "die", "fps": 6, "loop": false}
+    ]},
+    "tentacle_beast": {"file": "enemies/tentacle_beast.png", "animations": [
+      {"name": "idle", "fps": 5, "loop": true}, {"name": "slither", "fps": 7, "loop": true},
+      {"name": "strike", "fps": 9, "loop": false}, {"name": "blast", "fps": 7, "loop": false},
+      {"name": "die", "fps": 6, "loop": false}
+    ]},
+    "burrower": {"file": "enemies/burrower.png", "animations": [
+      {"name": "idle", "fps": 5, "loop": true}, {"name": "burrow", "fps": 8, "loop": false},
+      {"name": "emerge", "fps": 8, "loop": false}, {"name": "bite", "fps": 10, "loop": false},
+      {"name": "die", "fps": 6, "loop": false}
+    ]},
+    "mutant_brute": {"file": "enemies/mutant_brute.png", "animations": [
+      {"name": "idle", "fps": 5, "loop": true}, {"name": "walk", "fps": 6, "loop": true},
+      {"name": "roar", "fps": 8, "loop": false}, {"name": "slam", "fps": 9, "loop": false},
+      {"name": "die", "fps": 6, "loop": false}
+    ]},
+    "alien_queen": {"file": "enemies/alien_queen.png", "animations": [
+      {"name": "idle", "fps": 5, "loop": true}, {"name": "glide", "fps": 7, "loop": true},
+      {"name": "strike", "fps": 9, "loop": false}, {"name": "blast", "fps": 8, "loop": false},
+      {"name": "die", "fps": 6, "loop": false}
+    ]}
+  }
+}
