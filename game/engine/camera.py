@@ -20,6 +20,7 @@ class Camera:
     eye_z: float
     vfov: float = 0.0
     projection: float = 0.0
+    zoom: float = 0.0
 
 
 def derive_vfov(reference_hfov_deg: float, reference_aspect: float) -> float:
@@ -96,4 +97,5 @@ class CameraRig:
         hfov = derive_hfov(vfov, aspect)
         pitch = player.pitch + self.pitch_kick + self.damage_kick if vertical_look else 0.0
         return Camera(player.x, player.y, player.angle, hfov, pitch,
-                      max(0.03, eye), vfov, projection_scale(render_height, vfov))
+                      max(0.03, eye), vfov, projection_scale(render_height, vfov),
+                      self.zoom_blend)

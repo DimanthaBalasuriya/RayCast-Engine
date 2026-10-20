@@ -12,6 +12,7 @@ from engine.dialog import ConfirmDialog
 from engine.events import Events
 from engine.player import Player
 from engine.weapons import Weapons
+from engine.weapon_art import WeaponArt
 
 
 @dataclass(frozen=True)
@@ -44,7 +45,8 @@ def layout_for_window(size: tuple[int, int], ui_scale: float,
 
 
 class HUD:
-    def __init__(self, events: Events, avatar_art: CharacterArt | None = None):
+    def __init__(self, events: Events, avatar_art: CharacterArt | None = None,
+                 weapon_art: WeaponArt | None = None):
         self.font: pygame.font.Font | None = None
         self.large: pygame.font.Font | None = None
         self._font_step = -1
@@ -52,6 +54,7 @@ class HUD:
         self.muzzle_alpha = 0.0
         self._dim: pygame.Surface | None = None
         self.avatar_art = avatar_art
+        self.weapon_art = weapon_art
         self.avatar_state = "idle"
         self.avatar_time = 0.0
         events.subscribe("hurt", self.on_hurt)
@@ -142,6 +145,12 @@ class HUD:
             ammo += "  RELOAD"
         ammo_image = self.font.render(ammo, True, ammo_color)
         screen.blit(ammo_image, (layout.ammo_right - ammo_image.get_width(), layout.ammo_y))
+        if self.weapon_art is not None:
+            icon = self.weapon_art.icon(item.name)
+            icon_size = (round(32 * ui_scale), round(16 * ui_scale))
+            icon = pygame.transform.scale(icon, icon_size)
+            screen.blit(icon, (layout.ammo_right - ammo_image.get_width() - icon_size[0] - round(8 * ui_scale),
+                               layout.ammo_y + (ammo_image.get_height() - icon_size[1]) // 2))
         health_image = self.font.render(f"HEALTH {player.health}", True, (237, 235, 222))
         screen.blit(health_image, layout.health_pos)
         pygame.draw.rect(screen, (50, 43, 45), layout.health_bar)

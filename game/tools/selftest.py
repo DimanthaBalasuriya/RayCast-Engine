@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import math
 import os
+import json
+import shutil
+import tempfile
 from pathlib import Path
 import sys
 import numpy as np
@@ -22,6 +25,7 @@ from engine.lighting import Lighting
 from engine.player import Player, PlayerInput
 from engine.state import GameState, StateMachine
 from engine.viewmodel import Viewmodel
+from engine.weapon_art import WeaponArt
 from engine.weapons import Weapons
 from engine.window import compute_render_size, compute_ui_scale, compute_viewport
 
@@ -226,9 +230,88 @@ def run() -> None:
         centers.append(model.last_draw_rect.centerx)
     assert len(set(centers)) == 1
 
+    # A missing exported frame must load the concept fallback without a window.
+    with tempfile.TemporaryDirectory() as folder:
+        temp = Path(folder)
+        assets = ROOT / "assets"
+        for filename in ("weapons_concept.png", "weapons_concept.json"):
+            shutil.copy2(assets / filename, temp / filename)
+        data = json.loads((assets / "weapons.json").read_text(encoding="utf-8"))
+        data["image"] = "missing.png"
+        (temp / "weapons.json").write_text(json.dumps(data), encoding="utf-8")
+        fallback_art = WeaponArt(temp / "weapons.json")
+        assert fallback_art.frame("pistol", "fire", 2)[0].get_bounding_rect().width > 0
+        assert fallback_art.icon("shotgun").get_bounding_rect().width > 0
+        sheet = pygame.image.load(str(assets / "weapons.png")).convert_alpha()
+        missing_rect = pygame.Rect(data["weapons"]["pistol"]["frames"]["fire"][1]["rect"])
+        sheet.fill((0, 0, 0, 0), missing_rect)
+        sheet_path = temp / "with_empty_frame.png"
+        pygame.image.save(sheet, str(sheet_path))
+        data["image"] = sheet_path.name
+        (temp / "weapons.json").write_text(json.dumps(data), encoding="utf-8")
+        empty_frame_art = WeaponArt(temp / "weapons.json")
+        expected = fallback_art.frame("pistol", "fire", 1)[0]
+        actual = empty_frame_art.frame("pistol", "fire", 1)[0]
+        assert pygame.image.tobytes(actual, "RGBA") == pygame.image.tobytes(expected, "RGBA")
+        data["image"] = "missing.png"
+        (temp / "weapons.json").write_text(json.dumps(data), encoding="utf-8")
+        from tools import generate_weapons
+        previous_out = generate_weapons.OUT
+        try:
+            generate_weapons.OUT = temp
+            try:
+                generate_weapons.generate()
+                raise AssertionError("Generator overwrote an existing weapon manifest")
+            except SystemExit:
+                pass
+            assert json.loads((temp / "weapons.json").read_text(encoding="utf-8"))["image"] == "missing.png"
+            generate_weapons.generate(force=True)
+            backups = list((temp / "backups").glob("weapons-*.json"))
+            assert len(backups) == 1
+            assert json.loads(backups[0].read_text(encoding="utf-8"))["image"] == "missing.png"
+        finally:
+            generate_weapons.OUT = previous_out
+
     from main import setup
     game = setup()
     assert game.player.character_id == "assault"
+    for weapon_name in ("pistol", "shotgun"):
+        art = game.hud.weapon_art
+        assert art is not None
+        reload_frames = [pygame.image.tobytes(art.frame(weapon_name, "reload", index)[0], "RGBA")
+                         for index in range(art.count(weapon_name, "reload"))]
+        assert len(set(reload_frames)) >= 3
+        fire_frames = [pygame.image.tobytes(art.frame(weapon_name, "fire", index)[0], "RGBA")
+                       for index in range(art.count(weapon_name, "fire"))]
+        assert len(set(fire_frames)) == 3
+        game.weapons.current_name = weapon_name
+        game.weapons.state = "READY"
+        game.camera_rig.zoom_blend = 0
+        model = Viewmodel(game.weapons, game.player, game.lighting, art)
+        hip = pygame.Surface((320, 200), pygame.SRCALPHA)
+        hip_camera = game.camera_rig.build(game.player, 0, False)
+        model.draw(hip, hip_camera, 0)
+        ads = pygame.Surface((320, 200), pygame.SRCALPHA)
+        for _ in range(80):
+            ads_camera = game.camera_rig.build(game.player, 1 / 60, False, zoomed=True)
+            ads.fill((0, 0, 0, 0))
+            model.draw(ads, ads_camera, 1 / 60)
+        assert ads_camera.vfov < hip_camera.vfov
+        assert pygame.image.tobytes(hip, "RGBA") != pygame.image.tobytes(ads, "RGBA")
+    game.weapons.current_name = "shotgun"
+    game.weapons.refill()
+    assert game.weapons.update(0.01, pressed=True)
+    game.camera_rig.zoom_blend = 0
+    pump_model = Viewmodel(game.weapons, game.player, game.lighting, art)
+    pump_indices: set[int] = set()
+    for _ in range(45):
+        game.weapons.update(0.02)
+        pump_camera = game.camera_rig.build(game.player, 0, False)
+        pump_model.draw(screen, pump_camera, 0.02)
+        if pump_model.last_pose == "pump":
+            pump_indices.add(pump_model.last_frame_index)
+    assert len(pump_indices) >= 3
+    game.weapons.current_name = "pistol"
     camera = game.camera_rig.build(game.player, 0, False,
                                    aspect=game.renderer.width / game.renderer.height,
                                    render_height=game.renderer.height)

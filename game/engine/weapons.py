@@ -20,7 +20,11 @@ class WeaponState:
 
 class Weapons:
     def __init__(self, manifest: Path, events: Events):
+        self.manifest = manifest
         data = json.loads(manifest.read_text(encoding="utf-8"))
+        fallback_path = manifest.parent / data.get("fallback_manifest", "weapons_concept.json")
+        fallback = json.loads(fallback_path.read_text(encoding="utf-8"))["weapons"]
+        data["weapons"] = {**fallback, **data.get("weapons", {})}
         self.image_path = manifest.parent / data["image"]
         self.items = {name: WeaponState(name, definition, int(definition["mag_size"]),
                                         int(definition["start_reserve"]))

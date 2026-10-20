@@ -9,7 +9,7 @@ Use Python 3.11 or newer. From this `game` directory:
 ```powershell
 python -m pip install -r requirements.txt
 python tools/generate_atlas.py --viewer
-python tools/generate_weapons.py
+python tools/validate_weapons.py
 python tools/selftest.py
 python main.py
 ```
@@ -30,7 +30,7 @@ For the measured fast path, optionally install Numba with `python -m pip install
 | Space | Jump |
 | Left Ctrl | Crouch (hold by default) |
 | Left mouse button | Fire |
-| Right mouse button | Hold to zoom |
+| Right mouse button | Hold to zoom and aim down sights |
 | R | Reload |
 | 1 / 2, mouse wheel | Select pistol / shotgun |
 | Q | Switch to previous weapon |
@@ -71,7 +71,7 @@ The active player is now the Assault character (`PLAYER_CHARACTER = "assault"`).
 
 To replace art, replace `assets/atlas.png` and `assets/atlas.json` together. Keep the tile IDs the level uses, but arrange tiles anywhere in the PNG and update each manifest `col` and `row`. The manifest controls texture size, tile positions, and default floor/ceiling IDs; game code has no atlas coordinate assumptions. Missing IDs draw a magenta/black checker and log one warning per ID. The procedural generator uses a fixed seed and writes deterministic output.
 
-`assets/weapons.json` defines every weapon by name. Each entry has `slot`, `fire_mode` (`semi`, `auto` or `pump`), `rpm`, `damage`, `pellets`, `spread_deg`, `range`, `mag_size`, `start_reserve`, `reload_time`, `switch_time`, recoil and muzzle-light objects, plus `frames` (`idle`, `fire`, `reload`, `switch`, `pump`) with PNG pixel rectangles. Change stats or add another weapon entry with a new slot without changing game code. To replace the placeholder art, replace `assets/weapons.png` and update the rectangles and image name in `weapons.json`. `python tools/generate_weapons.py` regenerates both files deterministically, overwriting replacements.
+`assets/weapons.json` defines every weapon by name, including gameplay stats and animation frame rectangles. The held weapons use rear-perspective concept art: the PX4 pistol and the A1 assault rifle design in the existing shotgun gameplay slot. For the drawing template, validation commands, preview controls and replacement steps, see [ART_GUIDE.md](ART_GUIDE.md). `python tools/generate_weapons.py` is a legacy generator and refuses to overwrite existing art unless `--force`; forced runs back up the files first.
 
 `level01.json` marks three lights as `shootable: true`: a starting torch and two hall tech lights. Shooting one disables its contribution and emits `light_shot_out`. Weapon firing, impacts, movement, damage and respawn emit synchronous events through `engine/events.py`; no audio is played.
 

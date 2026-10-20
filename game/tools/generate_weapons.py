@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import argparse
+from datetime import datetime
 import json
 from pathlib import Path
 import random
+import shutil
 
 from PIL import Image, ImageDraw
 
@@ -46,9 +49,20 @@ def draw_frame(draw: ImageDraw.ImageDraw, ox: int, oy: int, shotgun: bool,
         draw.point((ox + px, oy + py + shift), fill=(85, 91, 94, 255))
 
 
-def generate() -> None:
+def generate(force: bool = False) -> None:
     """Write the sprite sheet and manifest with fixed frame ordering."""
     OUT.mkdir(exist_ok=True)
+    destinations = (OUT / "weapons.png", OUT / "weapons.json")
+    existing = [path for path in destinations if path.exists()]
+    if existing and not force:
+        names = ", ".join(path.name for path in existing)
+        raise SystemExit(f"Refusing to overwrite {names}. Use --force to back up and replace them.")
+    if existing:
+        backup_dir = OUT / "backups"
+        backup_dir.mkdir(exist_ok=True)
+        stamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+        for path in existing:
+            shutil.copy2(path, backup_dir / f"{path.stem}-{stamp}{path.suffix}")
     poses = ("idle", "fire1", "fire2", "reload1", "reload2", "switch", "pump")
     image = Image.new("RGBA", (FRAME * len(poses), FRAME * 2), (0, 0, 0, 0))
     draw = ImageDraw.Draw(image)
@@ -85,4 +99,7 @@ def generate() -> None:
 
 
 if __name__ == "__main__":
-    generate()
+    parser = argparse.ArgumentParser(description="Generate legacy placeholder weapon art")
+    parser.add_argument("--force", action="store_true",
+                        help="back up existing art in assets/backups before replacing it")
+    generate(parser.parse_args().force)

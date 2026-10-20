@@ -28,6 +28,7 @@ from engine.player import Player, PlayerInput
 from engine.renderer import Renderer
 from engine.state import GameState, StateMachine
 from engine.viewmodel import Viewmodel
+from engine.weapon_art import WeaponArt
 from engine.weapons import Weapons
 from engine.window import WindowManager, compute_render_size, compute_ui_scale, compute_viewport
 
@@ -68,6 +69,7 @@ def setup(size: tuple[int, int] | None = None) -> Game:
     renderer = Renderer(level, atlas, lighting, size or config.RENDER_SIZE)
     camera_rig = CameraRig(events)
     weapons = Weapons(ROOT / "assets" / "weapons.json", events)
+    weapon_art = WeaponArt(weapons.manifest)
     decals = Decals()
     combat = Combat(level, lighting, decals, events)
     spawn_x, spawn_y = config.TEST_ENEMY_SPAWN
@@ -76,13 +78,13 @@ def setup(size: tuple[int, int] | None = None) -> Game:
     enemy = Enemy(spawn_x, spawn_y, events, spawn_x, spawn_y)
     combat.enemies.append(enemy)
     renderer.decals = decals
-    renderer.viewmodel = Viewmodel(weapons, player, lighting)
+    renderer.viewmodel = Viewmodel(weapons, player, lighting, weapon_art)
     character_manifest = ROOT / "assets" / "characters" / "animations" / "manifest.json"
     renderer.enemy = enemy
     renderer.enemy_art = CharacterArt(character_manifest, "enemies", "alpha_drone")
     avatar_art = CharacterArt(character_manifest, "players", player.character_id)
     return Game(level, player, lighting, renderer, events, camera_rig,
-                weapons, combat, decals, HUD(events, avatar_art), DebugOverlay(), enemy)
+                weapons, combat, decals, HUD(events, avatar_art, weapon_art), DebugOverlay(), enemy)
 
 
 def benchmark(frames: int, size: tuple[int, int] | None = None) -> None:
@@ -97,7 +99,7 @@ def benchmark(frames: int, size: tuple[int, int] | None = None) -> None:
         for vertical in (False, True):
             game.weapons.refill()
             game.player.pitch = game.renderer.height * 0.12 if vertical else 0
-            game.renderer.viewmodel = None if stage == "P2" else Viewmodel(game.weapons, game.player, game.lighting)
+            game.renderer.viewmodel = None if stage == "P2" else Viewmodel(game.weapons, game.player, game.lighting, game.hud.weapon_art)
             game.renderer.decals = None if stage == "P2" else game.decals
             game.lighting.flashlight_on = stage != "P2"
             now = time.perf_counter()
